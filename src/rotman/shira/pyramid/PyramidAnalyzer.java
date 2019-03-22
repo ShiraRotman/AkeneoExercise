@@ -5,9 +5,9 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.RecursiveTask;
+import java.util.stream.Collectors;
 
 class PyramidPathTask extends RecursiveTask<List<Long>>
 {
@@ -108,10 +108,14 @@ public class PyramidAnalyzer
                 }
             }
         } while (!finished);
+
         analyzer.close();
         synchronizer.arriveAndDeregister();
-        List<Long> results=mainTask.join();
-        for (Long result : results)
-            System.out.println(result + " ");
+        List<Long> pathSums=mainTask.join();
+        Map<Long,Long> countedBySum=pathSums.parallelStream().collect(Collectors.
+                groupingBy(Long::longValue,Collectors.counting()));
+        System.out.println("Sum | Count");
+        countedBySum.entrySet().stream().sorted(Map.Entry.<Long,Long> comparingByValue().reversed()).
+                forEach(entry->System.out.println(entry.getKey() + " | " + entry.getValue()));
     }
 }
